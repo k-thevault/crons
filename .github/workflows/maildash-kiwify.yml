@@ -1,0 +1,26 @@
+name: MailDash — Kiwify
+# Repo PUBLICO de proposito: Actions e ilimitado em repo publico.
+# Este repo NAO contem codigo nem dado — so o agendamento.
+# REGRA DE OURO: nunca imprimir o corpo da resposta (log publico).
+on:
+  schedule:
+    - cron: "0 */3 * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Chama /api/cron/sync-kiwify?window_mins=200
+        env:
+          APP_URL: ${{ secrets.MAILDASH_APP_URL }}
+          CRON_SECRET: ${{ secrets.MAILDASH_CRON_SECRET }}
+        run: |
+          set -eu
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" -m 290 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL}/api/cron/sync-kiwify?window_mins=200")
+          echo "HTTP ${STATUS}"
+          [ "$STATUS" = "200" ] || { echo "falhou (corpo omitido: log publico)"; exit 1; }
