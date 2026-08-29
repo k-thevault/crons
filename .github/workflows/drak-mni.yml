@@ -1,0 +1,35 @@
+name: DraK — intimacoes pendentes (MNI)
+# Pergunta aos tribunais cadastrados "tem intimacao esperando a advogada?"
+# pelo canal oficial do CNJ (MNI, consultarAvisosPendentes).
+#
+# Este cron NAO abre intimacao nenhuma: abrir registra ciencia e faz o prazo
+# comecar a correr. Ele so LISTA o que esta pendente e manda push.
+#
+# Repo PUBLICO de proposito: Actions e ilimitado em repo publico.
+# REGRA DE OURO: nunca imprimir o corpo da resposta (log publico) — aqui o
+# corpo carrega numero de processo e orgao julgador.
+on:
+  schedule:
+    # 4x/dia em horario util (UTC-3): 8h, 11h, 14h, 18h de Brasilia.
+    # Intimacao pendente tem relogio correndo (ciencia tacita), entao vale
+    # olhar mais de uma vez por dia — mas nao adianta varrer de madrugada.
+    - cron: "0 11,14,17,21 * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  avisos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Chama /api/cron/mni
+        env:
+          APP_URL: ${{ secrets.DRAK_APP_URL }}
+          CRON_SECRET: ${{ secrets.DRAK_CRON_SECRET }}
+        run: |
+          set -eu
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" -m 290 -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL}/api/cron/mni")
+          echo "HTTP ${STATUS}"
+          [ "$STATUS" = "200" ] || { echo "falhou (corpo omitido: log publico)"; exit 1; }
