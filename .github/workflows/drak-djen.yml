@@ -4,7 +4,13 @@ name: DraK — DJEN ingest
 # REGRA DE OURO: nunca imprimir o corpo da resposta (log publico).
 on:
   schedule:
-    - cron: "0 9,12,15,18,21 * * *"
+    # Minuto 07 de proposito, NAO :00. O agendador do GitHub concentra
+    # a fila na hora cheia e atrasa/PULA execucoes ali (em 30/08/2026 as
+    # rodadas das 09h e 12h UTC simplesmente nao dispararam, e a advogada
+    # viu "Sincronizacao com problema" as 10h35 BRT). A propria doc do
+    # GitHub recomenda fugir do topo da hora. Se mudar, manter em sincronia
+    # com SLOTS_UTC/SLOT_MINUTO em DraK src/lib/sync/health.ts.
+    - cron: "7 9,12,15,18,21 * * *"
   workflow_dispatch: {}
 permissions:
   contents: read
