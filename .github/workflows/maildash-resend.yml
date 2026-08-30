@@ -4,7 +4,9 @@ name: MailDash — Resend
 # REGRA DE OURO: nunca imprimir o corpo da resposta (log publico).
 on:
   schedule:
-    - cron: "0 */4 * * *"
+    # Minuto quebrado de proposito, NAO :00 — ver drak-djen.yml. O agendador
+    # do GitHub concentra a fila no topo da hora e atrasa/PULA execucoes ali.
+    - cron: "41 */4 * * *"
   workflow_dispatch: {}
 permissions:
   contents: read

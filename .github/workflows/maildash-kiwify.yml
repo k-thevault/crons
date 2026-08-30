@@ -4,7 +4,9 @@ name: MailDash — Kiwify
 # REGRA DE OURO: nunca imprimir o corpo da resposta (log publico).
 on:
   schedule:
-    - cron: "0 */3 * * *"
+    # Minuto quebrado de proposito, NAO :00 — ver drak-djen.yml. O agendador
+    # do GitHub concentra a fila no topo da hora e atrasa/PULA execucoes ali.
+    - cron: "13 */3 * * *"
   workflow_dispatch: {}
 permissions:
   contents: read

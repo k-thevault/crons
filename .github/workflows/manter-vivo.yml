@@ -6,7 +6,10 @@ name: Manter vivo
 # NAO REMOVER.
 on:
   schedule:
-    - cron: "0 5 1 * *"    # dia 1 de cada mes, 02h BRT
+    # Minuto quebrado de proposito, NAO :00 — ver drak-djen.yml. Aqui pesa
+    # DOBRADO: se o GitHub pular esta unica rodada do mes, o repo pode passar
+    # dos 60 dias sem commit e ter TODOS os agendamentos desativados.
+    - cron: "17 5 1 * *"   # dia 1 de cada mes, 02h17 BRT
   workflow_dispatch: {}
 permissions:
   contents: write
