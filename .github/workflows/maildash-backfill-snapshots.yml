@@ -1,0 +1,47 @@
+name: MailDash — Backfill de snapshots (manual)
+# Repo PUBLICO de proposito: Actions e ilimitado em repo publico.
+# REGRA DE OURO: nunca imprimir o corpo da resposta (log publico).
+#
+# SEM AGENDAMENTO — so workflow_dispatch. Existe porque o CRON_SECRET do
+# MailDash e "sensitive" na Vercel (nao pode ser lido de volta por ninguem),
+# entao a unica forma de chamar /api/admin/backfill-snapshots com o segredo
+# certo e daqui.
+#
+# Quando usar: uma fonte de venda entrou no MailDash DEPOIS de o snapshot
+# daquele dia ja ter sido gravado — os graficos de semana/dia passados leem
+# sales_daily_snapshots, entao ficam desatualizados ate o backfill rodar.
+# Foi o caso da ClickBank em 31/08/2026 (funil americano migrou em 10/08).
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: "Data inicial (YYYY-MM-DD)"
+        required: true
+      to:
+        description: "Data final (YYYY-MM-DD)"
+        required: true
+      dry:
+        description: "1 = so conta, nao grava"
+        required: false
+        default: "1"
+permissions:
+  contents: read
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Chama /api/admin/backfill-snapshots
+        env:
+          APP_URL: ${{ secrets.MAILDASH_APP_URL }}
+          CRON_SECRET: ${{ secrets.MAILDASH_CRON_SECRET }}
+          FROM: ${{ inputs.from }}
+          TO: ${{ inputs.to }}
+          DRY: ${{ inputs.dry }}
+        run: |
+          set -eu
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" -m 590 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL}/api/admin/backfill-snapshots?from=${FROM}&to=${TO}&days=40&dry=${DRY}")
+          echo "HTTP ${STATUS} (from=${FROM} to=${TO} dry=${DRY})"
+          [ "$STATUS" = "200" ] || { echo "falhou (corpo omitido: log publico)"; exit 1; }
