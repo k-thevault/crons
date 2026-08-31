@@ -7,13 +7,21 @@ name: MailDash — ClickBank
 # Este e o gemeo do maildash-digistore.yml; os dois seguem vivos (a Digistore
 # ainda tem vendas) e batem no MESMO banco do DashApp.
 #
-# Horario: minuto 52, a cada 3h (02:52, 05:52 ... 23:52 UTC). Fora do minuto
-# :00 pela regra do CLAUDE.md, e a rodada das 02:52 cai 13 min ANTES do
-# /api/cron/daily-snapshot da Vercel (03:05 UTC), que fecha o dia BRT em
-# 03:00 UTC — assim o snapshot de ontem ja inclui estas vendas.
+# HORARIO (ajustado em 31/08/2026): minuto 34, de 3 em 3 horas, MAIS uma rodada
+# extra as 04:34 UTC. O dia BRT que o /api/cron/daily-snapshot fecha termina as
+# 03:00 UTC, e o snapshot roda as 06:05 UTC — entao as rodadas das 03:34 e 04:34
+# caem DEPOIS do corte e ANTES do snapshot. O horario anterior (02:52) era antes
+# do corte: venda feita entre 23:52 BRT e a meia-noite ficava de fora.
+#
+# A rodada extra e redundancia deliberada: o agendador do GitHub as vezes PULA
+# uma execucao em silencio, e a ClickBank nao entrega webhook no MailDash — nao
+# ha reserva. Upsert por order_id = idempotente.
+#
+# Mexeu aqui? Confira maildash-digistore.yml e o cron da Vercel em vercel.json.
 on:
   schedule:
-    - cron: "52 2-23/3 * * *"
+    - cron: "34 */3 * * *"
+    - cron: "34 4 * * *"
   workflow_dispatch: {}
 permissions:
   contents: read

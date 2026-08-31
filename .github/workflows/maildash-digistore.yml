@@ -2,9 +2,23 @@ name: MailDash — Digistore
 # Repo PUBLICO de proposito: Actions e ilimitado em repo publico.
 # Este repo NAO contem codigo nem dado — so o agendamento.
 # REGRA DE OURO: nunca imprimir o corpo da resposta (log publico).
+#
+# HORARIO (corrigido em 31/08/2026): minuto 26, de 3 em 3 horas, MAIS uma
+# rodada extra as 04:26 UTC. O dia BRT que o /api/cron/daily-snapshot fecha
+# termina as 03:00 UTC, e o snapshot roda as 06:05 UTC — entao as rodadas das
+# 03:26 e 04:26 caem DEPOIS do corte e ANTES do snapshot, e o snapshot ve o dia
+# inteiro. Antes era "30 a cada 3h": a ultima rodada util caia as 00:30 UTC =
+# 21:30 BRT, e venda feita depois disso ficava de fora do snapshot daquele dia.
+#
+# A rodada extra e redundancia deliberada: o agendador do GitHub as vezes PULA
+# uma execucao em silencio, e o webhook Digistore do MailDash esta desligado
+# (responde 503) — nao ha reserva. Upsert por order_id = idempotente.
+#
+# Mexeu aqui? Confira maildash-clickbank.yml e o cron da Vercel em vercel.json.
 on:
   schedule:
-    - cron: "30 */3 * * *"
+    - cron: "26 */3 * * *"
+    - cron: "26 4 * * *"
   workflow_dispatch: {}
 permissions:
   contents: read

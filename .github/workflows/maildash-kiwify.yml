@@ -6,6 +6,9 @@ on:
   schedule:
     # Minuto quebrado de proposito, NAO :00 — ver drak-djen.yml. O agendador
     # do GitHub concentra a fila no topo da hora e atrasa/PULA execucoes ali.
+    # NAO MUDAR sem conferir a ordem da madrugada: a rodada das 03:13 UTC cai
+    # depois do fechamento do dia BRT (03:00) e antes do /api/cron/daily-snapshot
+    # (06:05 UTC), que e o que faz o snapshot de ontem ver o dia inteiro.
     - cron: "13 */3 * * *"
   workflow_dispatch: {}
 permissions:
