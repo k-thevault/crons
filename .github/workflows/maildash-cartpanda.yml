@@ -1,0 +1,47 @@
+name: MailDash — CartPanda
+# Repo PUBLICO de proposito: Actions e ilimitado em repo publico.
+# Este repo NAO contem codigo nem dado — so o agendamento.
+# REGRA DE OURO: nunca imprimir o corpo da resposta (log publico).
+#
+# Terceiro irmao do maildash-digistore.yml e do maildash-clickbank.yml. Traz as
+# vendas de e-mail do Sacred Pineal Seed (a oferta de afiliado que roda na
+# CartPanda) do DashApp para o MailDash.
+#
+# ESTE E O UNICO CAMINHO. A CartPanda e a unica plataforma sem segunda via de
+# ingestao no DashApp — a API dela exige a chave da LOJA, e a loja nao e nossa.
+# Se este agendamento parar, a receita de e-mail do suplemento some do painel
+# com a mesma cara de uma semana fraca, e nada fica vermelho.
+#
+# HORARIO: minuto 42, de 3 em 3 horas, MAIS uma rodada extra as 04:42 UTC. O dia
+# BRT que o /api/cron/daily-snapshot fecha termina as 03:00 UTC e o snapshot roda
+# as 06:05 UTC, entao as rodadas das 03:42 e 04:42 caem DEPOIS do corte e ANTES
+# do snapshot. O minuto 42 evita empilhar tres chamadas no mesmo instante
+# (Digistore no 26, ClickBank no 34).
+#
+# A rodada extra e redundancia deliberada: o agendador do GitHub as vezes PULA
+# uma execucao em silencio. Upsert por order_id = idempotente.
+#
+# Mexeu aqui? Confira maildash-clickbank.yml e o cron da Vercel em vercel.json.
+on:
+  schedule:
+    - cron: "42 */3 * * *"
+    - cron: "42 4 * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Chama /api/cron/sync-cartpanda
+        env:
+          APP_URL: ${{ secrets.MAILDASH_APP_URL }}
+          CRON_SECRET: ${{ secrets.MAILDASH_CRON_SECRET }}
+        run: |
+          set -eu
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" -m 290 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL}/api/cron/sync-cartpanda")
+          echo "HTTP ${STATUS}"
+          [ "$STATUS" = "200" ] || { echo "falhou (corpo omitido: log publico)"; exit 1; }
